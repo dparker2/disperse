@@ -14,18 +14,13 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
         return 0;
     }
 
-    Hotkeys* hotkeys = new Hotkeys();    
-
     MSG msg;
     while (GetMessage (&msg, NULL, 0, 0)) {
-        if (msg.message == WM_HOTKEY)
-            hotkeys->handle(msg.wParam);
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
     delete app;
-    delete hotkeys;
 
     return msg.wParam;
 }

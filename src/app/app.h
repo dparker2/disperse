@@ -3,6 +3,7 @@
 
 #include "constants.h"
 #include "icon/icon.h"
+#include "hotkeys/hotkeys.h"
 
 class App {
 public:
@@ -19,6 +20,7 @@ private:
     WNDCLASSEX makeWindowClass(HINSTANCE);
     HWND hwnd;
     Icon* icon;
+    Hotkeys* hotkeys;
 };
 
 #endif

@@ -5,6 +5,9 @@ App::~App() {
     if (this->icon != nullptr) {
         delete this->icon;
     }
+    if (this->hotkeys != nullptr) {
+        delete this->hotkeys;
+    }
 }
 
 bool App::createWindow(HINSTANCE hThisInstance, int nCmdShow) {
@@ -107,12 +110,17 @@ LRESULT App::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
     }
 
     switch (message) {
+        case WM_INPUT:
+            this->hotkeys->handle(lParam);
+            break;
+
         case WM_ACTIVATE:
             this->icon->add();
             break;
 
         case WM_CREATE:
             this->hide();
+            this->hotkeys = new Hotkeys(this->hwnd);
             this->icon->initMenu();
             break;
 
