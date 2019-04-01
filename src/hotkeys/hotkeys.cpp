@@ -12,21 +12,24 @@ RECT getMonitorRect(HWND hWnd);
 Dimensions calcNewDimensions(RECT monitorRect, float xStart, float yStart, float width, float height);
 void reposition(HWND hWnd, Dimensions dims);
 
-Hotkeys::Hotkeys(HWND hWnd) {
-    this->prevAction = 0;
-    this->activation = vkModifiers{VK_MENU, VK_SHIFT};
-    this->directionLock = vkModifiers{Z};
-    Section section;
-    section.half = TWO;
-    section.third = THREE;
-    section.fourth = FOUR;
-    this->section = section;
-    Direction direction;
-    direction.up = UP;
-    direction.down = DOWN;
-    direction.left = LEFT;
-    direction.right = RIGHT;
-    this->direction = direction;
+vkNames initSections() {
+    vkNames vks;
+    vks[TWO] = "half";
+    vks[THREE] = "third";
+    vks[FOUR] = "fourth";
+    return vks;
+}
+
+vkNames initActions() {
+    vkNames vks;
+    vks[UP] = "up";
+    vks[DOWN] = "down";
+    vks[LEFT] = "left";
+    vks[RIGHT] = "right";
+    return vks;
+}
+
+void registerKeyboardInputs(HWND hWnd) {
     RAWINPUTDEVICE Rid[1];
     Rid[0].usUsagePage = 0x01; 
     Rid[0].usUsage = 0x06; 
@@ -36,12 +39,51 @@ Hotkeys::Hotkeys(HWND hWnd) {
         throw GetLastError();
 }
 
+Hotkeys::Hotkeys(HWND hWnd) {
+    this->prevAction = 0;
+    this->activation = vkModifiers{VK_MENU, VK_SHIFT};
+    this->directionLock = vkModifiers{ONE};
+    this->sections = initSections();
+    this->actions = initActions();
+    registerKeyboardInputs(hWnd);
+}
+
 Hotkeys::~Hotkeys() {
 
 }
 
-void Hotkeys::handle(LPARAM lParam) {
-    HRAWINPUT rawInput = (HRAWINPUT)lParam;
+void Hotkeys::handleInput(LPARAM lParam) {
+    RAWKEYBOARD keyboard = this->rawInputToKeyboard((HRAWINPUT)lParam);
+    UINT vKeyCode = keyboard.VKey;
+    if (!this->shouldHandleKey(vKeyCode, keyboard.Message)) {
+        return;
+    }
+
+    if (this->isPressed(this->activation)) {
+        this->handleKey(vKeyCode);
+    }
+}
+
+bool Hotkeys::shouldHandleKey(UINT vKeyCode, UINT message) {
+    if (!this->isActionKey(vKeyCode)) {
+        return false;  // Don't care if its not actions key
+    }
+
+    if (this->prevInput == vKeyCode) {
+        if (message == WM_KEYDOWN || message == WM_SYSKEYDOWN) {
+            return false;  // If same key as before and keydown, ignore
+        } else if (message == WM_KEYUP || message == WM_SYSKEYUP) {
+            this->prevInput = 0;  // Stop ignoring on keyup
+            return false;
+        }
+    }
+    
+    // New key, ignore future keydowns
+    this->prevInput = vKeyCode;
+    return true;
+}
+
+RAWKEYBOARD Hotkeys::rawInputToKeyboard(HRAWINPUT rawInput) {
     UINT dwSize;
 
     GetRawInputData(rawInput, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
@@ -53,26 +95,7 @@ void Hotkeys::handle(LPARAM lParam) {
          OutputDebugString (TEXT("GetRawInputData does not return correct size !\n")); 
 
     RAWINPUT* raw = (RAWINPUT*)lpb;
-
-    if (!this->isDirectionKey(raw->data.keyboard.VKey)) {
-        return; // Don't care if its not direction key
-    }
-
-    if (this->prevInput == raw->data.keyboard.VKey) {
-        if (raw->data.keyboard.Message == WM_KEYDOWN || raw->data.keyboard.Message == WM_SYSKEYDOWN) {
-            return;  // If same key as before and keydown, ignore
-        } else if (raw->data.keyboard.Message == WM_KEYUP || raw->data.keyboard.Message == WM_SYSKEYUP) {
-            this->prevInput = 0;  // Stop ignoring on keyup
-            return;
-        }
-    }
-    
-    // New key, ignore future keydowns
-    this->prevInput = raw->data.keyboard.VKey;
-
-    if (this->isPressed(this->activation)) {
-        this->handleKey(raw->data.keyboard.VKey);
-    }
+    return raw->data.keyboard;
 }
 
 bool Hotkeys::isPressed(vkModifiers modifiers) {
@@ -88,16 +111,11 @@ bool Hotkeys::isPressed(UINT vkCode) {
     return (bool)GetAsyncKeyState(vkCode);
 }
 
-bool Hotkeys::isDirectionKey(UINT vkCode) {
-    return 
-        vkCode == this->direction.up ||
-        vkCode == this->direction.down ||
-        vkCode == this->direction.left ||
-        vkCode == this->direction.right;
+bool Hotkeys::isActionKey(UINT vkCode) {
+    return this->actions.count(vkCode) == 1;
 }
 
 void Hotkeys::handleKey(UINT vkCode) {
-    //this->hotkeys[id]->handle();
     HWND selected = GetForegroundWindow();
     if (selected == NULL) {
         return;
@@ -107,6 +125,12 @@ void Hotkeys::handleKey(UINT vkCode) {
     float areaSize;
     bool flipArea = vkCode == this->prevAction;
 
+    // TODO refactor this function to:
+    //  1 - Use map structures instead for this->section and this->actions
+    //  2 - Call different functions for
+    //      - fullscreen (dont care about other keys, just resize)
+    //      - center (dont care about other keys, just reposition)
+    //      - direction
     if (isPressed(this->section.half)) {
         areaSize = 0.5;
     } else if (isPressed(this->section.third)) {
@@ -117,10 +141,10 @@ void Hotkeys::handleKey(UINT vkCode) {
         return;
     }
 
-    bool up = vkCode == this->direction.up;
-    bool down = vkCode == this->direction.down;
-    bool left = vkCode == this->direction.left;
-    bool right = vkCode == this->direction.right;
+    bool up = vkCode == this->actions.up;
+    bool down = vkCode == this->actions.down;
+    bool left = vkCode == this->actions.left;
+    bool right = vkCode == this->actions.right;
     bool lockDirection = isPressed(this->directionLock);
     bool vertical = up || down;
     bool horizontal = left || right;
