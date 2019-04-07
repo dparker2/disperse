@@ -21,8 +21,8 @@ private:
     void handleKey(UINT);
     void fullscreen();
     void center();
-    void translate();
-    void split();
+    void split(UINT, const char*);
+    void translate(UINT);
     bool isPressed(VkModifiers);
     bool isPressed(UINT);
     bool isActionKey(UINT);

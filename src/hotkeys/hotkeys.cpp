@@ -159,24 +159,7 @@ void Hotkeys::center() {
     reposition(this->activeWindow, dimensions);
 }
 
-void Hotkeys::handleKey(UINT vkCode) {
-    this->activeWindow = GetForegroundWindow();
-    if (this->activeWindow == NULL) {
-        return;
-    }
-    if (!GetWindowRect(this->activeWindow, &this->activeRect)) {
-        return;
-    }
-    this->monitorRect = getMonitorRect(this->activeWindow);
-
-    if (vkCode == F) {
-        this->fullscreen();
-        return;
-    } else if (vkCode == C) {
-        this->center();
-        return;
-    }
-
+void Hotkeys::split(UINT vkCode, const char* section) {
     Dimensions newDimensions;
     AreaSize areaSize;
     bool flipArea = vkCode == this->prevAction;
@@ -188,12 +171,6 @@ void Hotkeys::handleKey(UINT vkCode) {
     bool vertical = up || down;
     bool horizontal = left || right;
 
-    // TODO refactor this function to:
-    //  2 - Call different functions for
-    //      - fullscreen (dont care about other keys, just resize)
-    //      - center (dont care about other keys, just reposition)
-    //      - direction
-    const char* section = this->currPressed(this->sections);
     if (section == this->sections[TWO]) {
         areaSize.primary = 0.5;
     } else if (section == this->sections[THREE]) {
@@ -231,6 +208,32 @@ void Hotkeys::handleKey(UINT vkCode) {
 
     this->prevAction = flipArea ? 0 : vkCode;
     reposition(this->activeWindow, newDimensions);
+}
+
+void Hotkeys::handleKey(UINT vkCode) {
+    bool lockDirection;
+    const char* section;
+
+    this->activeWindow = GetForegroundWindow();
+    if (this->activeWindow == NULL) {
+        return;
+    }
+    if (!GetWindowRect(this->activeWindow, &this->activeRect)) {
+        return;
+    }
+    this->monitorRect = getMonitorRect(this->activeWindow);
+
+    section = this->currPressed(this->sections);
+    lockDirection = isPressed(this->directionLock);
+    if (vkCode == F) {
+        this->fullscreen();
+    } else if (vkCode == C) {
+        this->center();
+    } else if (section) {
+        this->split(vkCode, section);
+    } else {
+        this->translate(vkCode);
+    }
 }
 
 RECT getMonitorRect(HWND hWnd) {
