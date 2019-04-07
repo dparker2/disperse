@@ -129,6 +129,16 @@ const char* Hotkeys::currPressed(VkNames vkNames) {
     return 0;
 }
 
+void Hotkeys::fullscreen(HWND selected, RECT monitorRect) {
+    Dimensions dimensions = {
+        monitorRect.left,
+        monitorRect.top,
+        monitorRect.right - monitorRect.left,
+        monitorRect.bottom - monitorRect.top
+    };
+    reposition(selected, dimensions);
+}
+
 void Hotkeys::handleKey(UINT vkCode) {
     HWND selected = GetForegroundWindow();
     if (selected == NULL) {
@@ -139,6 +149,12 @@ void Hotkeys::handleKey(UINT vkCode) {
         return;
     }
     RECT monitorRect = getMonitorRect(selected);
+
+    if (vkCode == F) {
+        this->fullscreen(selected, monitorRect);
+        return;
+    }
+
     Dimensions newDimensions;
     AreaSize areaSize;
     bool flipArea = vkCode == this->prevAction;
@@ -151,7 +167,6 @@ void Hotkeys::handleKey(UINT vkCode) {
     bool horizontal = left || right;
 
     // TODO refactor this function to:
-    //  1 - Use map structures instead for this->section and this->actions
     //  2 - Call different functions for
     //      - fullscreen (dont care about other keys, just resize)
     //      - center (dont care about other keys, just reposition)

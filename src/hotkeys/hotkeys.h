@@ -19,6 +19,10 @@ private:
     RAWKEYBOARD rawInputToKeyboard(HRAWINPUT rawInput);
     bool shouldHandleKey(UINT, UINT);
     void handleKey(UINT);
+    void fullscreen(HWND, RECT);
+    void center(HWND, RECT, RECT);
+    void translate(HWND, RECT, RECT);
+    void split(HWND, RECT, RECT);
     bool isPressed(VkModifiers);
     bool isPressed(UINT);
     bool isActionKey(UINT);
