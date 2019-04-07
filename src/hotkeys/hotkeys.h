@@ -5,8 +5,8 @@
 #include <vector>
 #include <map>
 
-typedef std::vector<UINT> vkModifiers;
-typedef std::map<UINT, const char*> vkNames;
+typedef std::vector<UINT> VkModifiers;
+typedef std::map<UINT, const char*> VkNames;
 
 class Hotkeys {
 public:
@@ -19,15 +19,16 @@ private:
     RAWKEYBOARD rawInputToKeyboard(HRAWINPUT rawInput);
     bool shouldHandleKey(UINT, UINT);
     void handleKey(UINT);
-    bool isPressed(vkModifiers);
+    bool isPressed(VkModifiers);
     bool isPressed(UINT);
     bool isActionKey(UINT);
+    const char* currPressed(VkNames);
     UINT prevAction;
-    UINT prevInput;
-    vkModifiers activation;
-    vkModifiers directionLock;
-    vkNames sections;
-    vkNames actions; 
+    UINT currInput;
+    VkModifiers activation;
+    VkModifiers directionLock;
+    VkNames sections;
+    VkNames actions; 
     HHOOK keyboardHook;
 };
 
