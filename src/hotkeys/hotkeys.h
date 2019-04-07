@@ -19,10 +19,10 @@ private:
     RAWKEYBOARD rawInputToKeyboard(HRAWINPUT rawInput);
     bool shouldHandleKey(UINT, UINT);
     void handleKey(UINT);
-    void fullscreen(HWND, RECT);
-    void center(HWND, RECT, RECT);
-    void translate(HWND, RECT, RECT);
-    void split(HWND, RECT, RECT);
+    void fullscreen();
+    void center();
+    void translate();
+    void split();
     bool isPressed(VkModifiers);
     bool isPressed(UINT);
     bool isActionKey(UINT);
@@ -32,8 +32,10 @@ private:
     VkModifiers activation;
     VkModifiers directionLock;
     VkNames sections;
-    VkNames actions; 
-    HHOOK keyboardHook;
+    VkNames actions;
+    HWND activeWindow;
+    RECT activeRect;
+    RECT monitorRect;
 };
 
 #endif

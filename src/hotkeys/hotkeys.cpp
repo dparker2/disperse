@@ -18,6 +18,14 @@ RECT getMonitorRect(HWND hWnd);
 Dimensions calcNewDimensions(RECT monitorRect, float xStart, float yStart, float width, float height);
 void reposition(HWND hWnd, Dimensions dims);
 
+int width(RECT rect) {
+    return rect.right - rect.left;
+}
+
+int height(RECT rect) {
+    return rect.bottom - rect.top;
+}
+
 VkNames initSections() {
     VkNames vks;
     vks[TWO] = "half";
@@ -129,29 +137,43 @@ const char* Hotkeys::currPressed(VkNames vkNames) {
     return 0;
 }
 
-void Hotkeys::fullscreen(HWND selected, RECT monitorRect) {
+void Hotkeys::fullscreen() {
     Dimensions dimensions = {
-        monitorRect.left,
-        monitorRect.top,
-        monitorRect.right - monitorRect.left,
-        monitorRect.bottom - monitorRect.top
+        this->monitorRect.left,
+        this->monitorRect.top,
+        width(this->monitorRect),
+        height(this->monitorRect)
     };
-    reposition(selected, dimensions);
+    reposition(this->activeWindow, dimensions);
+}
+
+void Hotkeys::center() {
+    int selectedWidth = width(this->activeRect);
+    int selectedHeight = height(this->activeRect);
+    Dimensions dimensions = {
+        width(this->monitorRect) / 2 - selectedWidth / 2 + this->monitorRect.left,
+        height(this->monitorRect) / 2 - selectedHeight /2 + this->monitorRect.top,
+        selectedWidth,
+        selectedHeight,
+    };
+    reposition(this->activeWindow, dimensions);
 }
 
 void Hotkeys::handleKey(UINT vkCode) {
-    HWND selected = GetForegroundWindow();
-    if (selected == NULL) {
+    this->activeWindow = GetForegroundWindow();
+    if (this->activeWindow == NULL) {
         return;
     }
-    RECT selectedRect;
-    if (!GetWindowRect(selected, &selectedRect)) {
+    if (!GetWindowRect(this->activeWindow, &this->activeRect)) {
         return;
     }
-    RECT monitorRect = getMonitorRect(selected);
+    this->monitorRect = getMonitorRect(this->activeWindow);
 
     if (vkCode == F) {
-        this->fullscreen(selected, monitorRect);
+        this->fullscreen();
+        return;
+    } else if (vkCode == C) {
+        this->center();
         return;
     }
 
@@ -184,11 +206,11 @@ void Hotkeys::handleKey(UINT vkCode) {
 
     if (lockDirection) {
         if (vertical) {
-            areaSize.pos = (float)selectedRect.left / (float)(monitorRect.right - monitorRect.left);
-            areaSize.secondary = (float)(selectedRect.right - selectedRect.left) / (float)(monitorRect.right - monitorRect.left);
+            areaSize.pos = (float)this->activeRect.left / (float)width(this->monitorRect);
+            areaSize.secondary = (float)width(this->activeRect) / (float)width(this->monitorRect);
         } else {
-            areaSize.pos = (float)selectedRect.top / (float)(monitorRect.bottom - monitorRect.top);
-            areaSize.secondary = (float)(selectedRect.bottom - selectedRect.top) / (float)(monitorRect.bottom - monitorRect.top);
+            areaSize.pos = (float)this->activeRect.top / (float)height(this->monitorRect);
+            areaSize.secondary = (float)height(this->activeRect) / (float)height(this->monitorRect);
         }
     } else {
         areaSize.pos = 0;
@@ -196,19 +218,19 @@ void Hotkeys::handleKey(UINT vkCode) {
     }
 
     if (up) {
-        newDimensions = calcNewDimensions(monitorRect, areaSize.pos, 0, areaSize.secondary, areaSize.primary);
+        newDimensions = calcNewDimensions(this->monitorRect, areaSize.pos, 0, areaSize.secondary, areaSize.primary);
     } else if (down) {
-        newDimensions = calcNewDimensions(monitorRect, areaSize.pos, (1 - areaSize.primary), areaSize.secondary, areaSize.primary);
+        newDimensions = calcNewDimensions(this->monitorRect, areaSize.pos, (1 - areaSize.primary), areaSize.secondary, areaSize.primary);
     } else if (left) {
-        newDimensions = calcNewDimensions(monitorRect, 0, areaSize.pos, areaSize.primary, areaSize.secondary);
+        newDimensions = calcNewDimensions(this->monitorRect, 0, areaSize.pos, areaSize.primary, areaSize.secondary);
     } else if (right) {
-        newDimensions = calcNewDimensions(monitorRect, (1 - areaSize.primary), areaSize.pos, areaSize.primary, areaSize.secondary);
+        newDimensions = calcNewDimensions(this->monitorRect, (1 - areaSize.primary), areaSize.pos, areaSize.primary, areaSize.secondary);
     } else {
         return;
     }
 
     this->prevAction = flipArea ? 0 : vkCode;
-    reposition(selected, newDimensions);
+    reposition(this->activeWindow, newDimensions);
 }
 
 RECT getMonitorRect(HWND hWnd) {
