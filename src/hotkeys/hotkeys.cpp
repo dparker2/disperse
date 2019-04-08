@@ -15,6 +15,7 @@ typedef struct AreaSize {
 } AreaSize;
 
 RECT getMonitorRect(HWND hWnd);
+int findEdge(int currentPos, int maxEdge, int distance, bool positive);
 Dimensions calcNewDimensions(RECT monitorRect, float xStart, float yStart, float width, float height);
 void reposition(HWND hWnd, Dimensions dims);
 
@@ -160,6 +161,7 @@ void Hotkeys::center() {
 }
 
 void Hotkeys::split(UINT vkCode, const char* section) {
+    // TODO refactor this mess
     Dimensions newDimensions;
     AreaSize areaSize;
     bool flipArea = vkCode == this->prevAction;
@@ -210,6 +212,33 @@ void Hotkeys::split(UINT vkCode, const char* section) {
     reposition(this->activeWindow, newDimensions);
 }
 
+void Hotkeys::translate(UINT vkCode) {
+    Dimensions dimensions;
+    int edge, x, y;
+    int activeWidth = width(this->activeRect), activeHeight = height(this->activeRect);
+
+    if (vkCode == UP) {
+        edge = findEdge(this->activeRect.top, this->monitorRect.top, activeHeight, false);
+        x = this->activeRect.left;
+        y = edge;
+    } else if (vkCode == DOWN) {
+        edge = findEdge(this->activeRect.bottom, this->monitorRect.bottom, activeHeight, true);
+        x = this->activeRect.left;
+        y = edge - activeHeight;
+    } else if (vkCode == LEFT) {
+        edge = findEdge(this->activeRect.left, this->monitorRect.left, activeWidth, false);
+        x = edge;
+        y = this->activeRect.top;
+    } else if (vkCode == RIGHT) {
+        edge = findEdge(this->activeRect.right, this->monitorRect.right, activeWidth, true);
+        x = edge - activeWidth;
+        y = this->activeRect.top;
+    }
+
+    dimensions = { x, y, activeWidth, activeHeight };
+    reposition(this->activeWindow, dimensions);
+}
+
 void Hotkeys::handleKey(UINT vkCode) {
     bool lockDirection;
     const char* section;
@@ -243,6 +272,18 @@ RECT getMonitorRect(HWND hWnd) {
     if (!GetMonitorInfo(monitor, &monitorInfo))
         throw GetLastError();
     return monitorInfo.rcWork;
+}
+
+int findEdge(int currentPos, int maxEdge, int distance, bool positive) {
+    int edge;
+    if (positive) {
+        edge = currentPos + distance;
+        edge = edge > maxEdge ? maxEdge : edge;
+    } else {
+        edge = currentPos - distance;
+        edge = edge < maxEdge ? maxEdge : edge;
+    }
+    return edge;
 }
 
 Dimensions calcNewDimensions(RECT monitorRect, float xStart, float yStart, float width, float height) {
