@@ -3,41 +3,39 @@
 
 #include "constants.h"
 #include <vector>
+#include <map>
 
-typedef std::vector<UINT> vkModifiers;
-
-typedef struct Section {
-    UINT half;
-    UINT third;
-    UINT fourth;
-} Section;
-
-typedef struct Direction {
-    UINT left;
-    UINT right;
-    UINT up;
-    UINT down;
-} Direction;
+typedef std::vector<UINT> VkModifiers;
+typedef std::map<UINT, const char*> VkNames;
 
 class Hotkeys {
 public:
     Hotkeys(HWND);
     ~Hotkeys();
-    void handle(LPARAM);
+    void handleInput(LPARAM);
 
 private:
     //std::vector<Hotkey*> hotkeys;
-    bool isPressed(vkModifiers);
-    bool isPressed(UINT);
-    bool isDirectionKey(UINT);
+    RAWKEYBOARD rawInputToKeyboard(HRAWINPUT rawInput);
+    bool shouldHandleKey(UINT, UINT);
     void handleKey(UINT);
+    void fullscreen();
+    void center();
+    void split(UINT, const char*);
+    void translate(UINT);
+    bool isPressed(VkModifiers);
+    bool isPressed(UINT);
+    bool isActionKey(UINT);
+    const char* currPressed(VkNames);
     UINT prevAction;
-    UINT prevInput;
-    vkModifiers activation;
-    vkModifiers directionLock;
-    Section section;
-    Direction direction; 
-    HHOOK keyboardHook;
+    UINT currInput;
+    VkModifiers activation;
+    VkModifiers directionLock;
+    VkNames sections;
+    VkNames actions;
+    HWND activeWindow;
+    RECT activeRect;
+    RECT monitorRect;
 };
 
 #endif

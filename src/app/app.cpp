@@ -111,7 +111,7 @@ LRESULT App::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
         case WM_INPUT:
-            this->hotkeys->handle(lParam);
+            this->hotkeys->handleInput(lParam);
             break;
 
         case WM_ACTIVATE:
