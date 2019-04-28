@@ -1,8 +1,6 @@
 # disperse
 Lightweight window mover and resizer for Windows via keyboard shortcuts
 
-Under development
-
 Keybinds (eventually customizable):
 - ALT+CTRL+2+(UP|DOWN|LEFT|RIGHT) = 1/2 of monitor
 - ALT+CTRL+3+(UP|DOWN|LEFT|RIGHT) = 1/3 or 2/3 (alternating)
