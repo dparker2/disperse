@@ -1,26 +1,12 @@
-#include "iostream"
+#include <iostream>
+#include <thread>
 
-#include "app/app.h"
-#include "hotkeys/hotkeys.h"
+#include "windows/api.h"
+#include "hook/hook.h"
 
-int WINAPI WinMain (HINSTANCE hThisInstance,
-                    HINSTANCE hPrevInstance,
-                    LPSTR lpszArgument,
-                    int nCmdShow) {
-    App* app = new App();
-
-    if (!app->createWindow(hThisInstance, nCmdShow)) {
-        delete app;
-        return 0;
-    }
-
-    MSG msg;
-    while (GetMessage (&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-
-    delete app;
-
-    return msg.wParam;
+int main() {
+    Hook::init();
+    int exitCode = API::startLoop();
+    Hook::cleanup();
+    return exitCode;
 }
