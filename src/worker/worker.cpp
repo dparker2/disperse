@@ -1,6 +1,8 @@
 #include "worker.h"
 #include "../windows/api.h"
-#include <iostream>
+
+#include <queue>
+#include <mutex>
 
 std::mutex mutex;
 std::queue<Tailor::command> queue;

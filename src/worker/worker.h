@@ -3,10 +3,7 @@
 
 #include "../tailor/tailor.h"
 
-#include <iostream>
 #include <thread>
-#include <queue>
-#include <mutex>
 
 class Worker {
 public:

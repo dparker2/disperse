@@ -1,7 +1,7 @@
 #include "api.h"
 #include "api/util.h"
+
 #include <windows.h>
-#include <iostream>
 #include <bitset>
 
 int API::startLoop() {
