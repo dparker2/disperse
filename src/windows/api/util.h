@@ -4,9 +4,9 @@
 #include <stdexcept>
 #include <string>
 
-#define callWinAPI(func, args) {\
+#define handleError(func, args, err) {\
     SetLastError(0);\
-    if (!func args) {\
+    if (func args == err) {\
         LPVOID errBuf;\
         FormatMessage(\
             FORMAT_MESSAGE_ALLOCATE_BUFFER |\

@@ -4,13 +4,26 @@
 #include <windows.h>
 #include <bitset>
 
+#define TRAY_WINAPI 1
+#include "api/tray.h"
+
+void quitApp(struct tray_menu* item) {
+    tray_exit();
+}
+
 int API::startLoop() {
-    MSG msg;
-    while (GetMessage (&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-    return (int)msg.wParam;
+    struct tray_menu menu[] = {
+        {"Quit", 0, 0, quitApp, NULL},
+        {NULL, 0, 0, NULL, NULL}
+    };
+    struct tray tray = {
+        "icon.ico",
+        "Disperse",
+        menu
+    };
+    handleError(tray_init, (&tray), -1);
+    while (tray_loop(1) == 0);
+    tray_exit();
 }
 
 bool (*handleInput)(int, const char*) = NULL;
@@ -30,12 +43,12 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
 void API::attachHook(bool onInput(int, const char*)) {
     handleInput = onInput;
-    callWinAPI(SetWindowsHookEx, (
+    handleError(SetWindowsHookEx, (
         WH_KEYBOARD_LL,
         LowLevelKeyboardProc,
         NULL,
         0
-    ));
+    ), 0);
 }
 
 void API::sleep(int ms) {
@@ -54,7 +67,7 @@ API::rect API::getMonitorRectByHwnd(void* hwnd) {
     HMONITOR monitor = MonitorFromWindow((HWND)hwnd, MONITOR_DEFAULTTONEAREST);
     MONITORINFO monitorInfo;
     monitorInfo.cbSize = sizeof(monitorInfo);
-    callWinAPI(GetMonitorInfo, (monitor, &monitorInfo));
+    handleError(GetMonitorInfo, (monitor, &monitorInfo), 0);
     RECT workRect = monitorInfo.rcWork;
     API::rect rect;
     rect.x = workRect.left;
@@ -66,7 +79,7 @@ API::rect API::getMonitorRectByHwnd(void* hwnd) {
 
 API::rect API::getWindowRectByHwnd(void* hwnd) {
     RECT windowRect;
-    callWinAPI(GetWindowRect, ((HWND)hwnd, &windowRect));
+    handleError(GetWindowRect, ((HWND)hwnd, &windowRect), 0);
     API::rect rect;
     rect.x = windowRect.left;
     rect.y = windowRect.top;
@@ -76,7 +89,7 @@ API::rect API::getWindowRectByHwnd(void* hwnd) {
 }
 
 void API::resize(void* hwnd, int width, int height) {
-    callWinAPI(SetWindowPos, (
+    handleError(SetWindowPos, (
         (HWND)hwnd,
         NULL,
         0,
@@ -84,11 +97,11 @@ void API::resize(void* hwnd, int width, int height) {
         width,
         height,
         SWP_NOZORDER | SWP_NOMOVE
-    ));
+    ), 0);
 }
 
 void API::translate(void* hwnd, int x, int y) {
-    callWinAPI(SetWindowPos, (
+    handleError(SetWindowPos, (
         (HWND)hwnd,
         NULL,
         x,
@@ -96,5 +109,5 @@ void API::translate(void* hwnd, int x, int y) {
         0,
         0,
         SWP_NOZORDER | SWP_NOSIZE
-    ));
+    ), 0);
 }
