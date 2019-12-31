@@ -8,7 +8,7 @@
 class Worker {
 public:
     Worker();
-
+    ~Worker();
     void process(Tailor::command);
 
 private:
