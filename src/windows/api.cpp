@@ -11,8 +11,20 @@ void quitApp(struct tray_menu* item) {
     tray_exit();
 }
 
+void hideConsoleWindow(struct tray_menu* item) {
+    HWND hwnd = GetConsoleWindow();
+    ShowWindow(hwnd, SW_HIDE);
+}
+
+void showConsoleWindow(struct tray_menu* item) {
+    HWND hwnd = GetConsoleWindow();
+    ShowWindow(hwnd, SW_SHOW);
+}
+
 int API::startLoop() {
     struct tray_menu menu[] = {
+        {"Hide", 0, 0, hideConsoleWindow, NULL},
+        {"Show", 0, 0, showConsoleWindow, NULL},
         {"Quit", 0, 0, quitApp, NULL},
         {NULL, 0, 0, NULL, NULL}
     };
